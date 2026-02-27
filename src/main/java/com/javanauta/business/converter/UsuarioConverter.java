@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Component // component porque não é uma service, não tem regra de negócio
 
 public class UsuarioConverter {
 
@@ -30,7 +30,6 @@ public class UsuarioConverter {
 
     public List<Endereco> paraListaEndereco(List<EnderecoDTO> enderecoDTOS){
         return enderecoDTOS.stream().map(this::paraEndereco).toList();
-
 //        List<Endereco> enderecos = new ArrayList<>();
 //        for(EnderecoDTO enderecoDTO : enderecoDTOS){
 //            enderecos.add(paraEndereco(enderecoDTO));
