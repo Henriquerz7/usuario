@@ -1,10 +1,16 @@
 package com.javanauta.business;
 
 import com.javanauta.business.converter.UsuarioConverter;
+import com.javanauta.business.dto.EnderecoDTO;
+import com.javanauta.business.dto.TelefoneDTO;
 import com.javanauta.business.dto.UsuarioDTO;
+import com.javanauta.infrastructure.entity.Endereco;
+import com.javanauta.infrastructure.entity.Telefone;
 import com.javanauta.infrastructure.entity.Usuario;
 import com.javanauta.infrastructure.exception.ConflictException;
 import com.javanauta.infrastructure.exception.ResourceNotFoundException;
+import com.javanauta.infrastructure.repository.EnderecoRepository;
+import com.javanauta.infrastructure.repository.TelefoneRepository;
 import com.javanauta.infrastructure.repository.UsuarioRepository;
 import com.javanauta.infrastructure.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +25,8 @@ public class UsuarioService {
     private final UsuarioConverter usuarioConverter;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final EnderecoRepository enderecoRepository;
+    private final TelefoneRepository telefoneRepository;
 
     public UsuarioDTO salvaUsuario(UsuarioDTO usuarioDTO){
         emailExiste(usuarioDTO.getEmail());
@@ -43,9 +51,22 @@ public class UsuarioService {
         return usuarioRepository.existsByEmail(email);          // vai na interface usuarioRepository e chama o metodo existsByEmail passando como parâmetro email e retorna um boolean
     }
 
-    public Usuario buscarUsuarioPorEmail(String email){
-        return usuarioRepository.findByEmail(email).orElseThrow(
-                () -> new ResourceNotFoundException("Email não encontrado" + email));
+//    Este metodo está retornando um Usuario entity, por isso foi ajustado pelo metodo logo abaixo
+//    public Usuario buscarUsuarioPorEmail(String email){
+//        return usuarioRepository.findByEmail(email).orElseThrow(
+//                () -> new ResourceNotFoundException("Email não encontrado" + email));
+//    }
+    public UsuarioDTO buscarUsuarioPorEmail(String email){
+        try {
+            return usuarioConverter.paraUsuarioDTO(
+                    usuarioRepository.findByEmail(email)
+                            .orElseThrow(
+                                    () -> new ResourceNotFoundException("Email não encontrado" + email)
+                            )
+            );
+        } catch (ResourceNotFoundException e) {
+            throw new ResourceNotFoundException("Email não encontrado " + email);
+        }
     }
 
     public void deletaUsuarioPorEmail(String email){
@@ -64,4 +85,28 @@ public class UsuarioService {
 
         return usuarioConverter.paraUsuarioDTO(usuarioRepository.save(usuario));  // Salva os dados do usuário convertido e pega o retorno e converte para UsuarioDTO
     }
+
+    public EnderecoDTO atualizaEndereco(Long idEndereco, EnderecoDTO enderecoDTO){
+
+        Endereco entity = enderecoRepository.findById(idEndereco).orElseThrow(() ->
+                new ResourceNotFoundException("Id do endereço não encontrado " + idEndereco));
+
+        Endereco endereco = usuarioConverter.updateEndereco(enderecoDTO, entity);
+
+        return usuarioConverter.paraEnderecoDTO(enderecoRepository.save(endereco));
+
+        }
+
+    public TelefoneDTO atualizaTelefone(Long idTelefone, TelefoneDTO dto){
+
+        Telefone entity = telefoneRepository.findById(idTelefone).orElseThrow(() ->
+                new ResourceNotFoundException("Id do telefone não encontrado " + idTelefone));
+
+        Telefone telefone = usuarioConverter.updateTelefone(dto, entity);
+
+        return usuarioConverter.paraTelefoneDTO(telefoneRepository.save(telefone));
+
+    }
+
 }
+
